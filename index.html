@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>NZ Tax Refund Calculator</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #e0eafc, #cfdef3);
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      max-width: 800px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      background-color: #28a745;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    .info-button {
+      background-color: #007bff;
+      margin-top: 10px;
+    }
+    .info-button:hover {
+      background-color: #0056b3;
+    }
+    .refund-box {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .refund {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .owing {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .guide-section {
+      margin-top: 30px;
+      padding: 20px;
+      background-color: #f1f9ff;
+      border-left: 6px solid #007bff;
+      border-radius: 10px;
+      display: none;
+    }
+    .guide-section h2 {
+      margin-top: 0;
+    }
+    a {
+      color: #007bff;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tax Refund Calculator</h1>
+
+    <label for="income">Annual Income (NZD):</label>
+    <input type="number" id="income" placeholder="e.g. 84200" />
+
+    <label for="paidTax">Total Tax Paid (NZD):</label>
+    <input type="number" id="paidTax" placeholder="e.g. 17663.64" />
+
+    <button onclick="calculateTax()">Calculate</button>
+    <button class="info-button" onclick="toggleGuide()">How to Find IRD Info</button>
+
+    <div id="result" class="refund-box"></div>
+
+    <div id="guide" class="guide-section">
+      <h2>How to Find Your Annual Income & Tax Paid from IRD</h2>
+      <ol>
+        <li>Go to <a href="https://www.ird.govt.nz" target="_blank">https://www.ird.govt.nz</a></li>
+        <li>Click <strong>"Login"</strong> and choose <strong>"myIR Secure Online Services"</strong>.</li>
+        <li>Log in using your IRD number and password.</li>
+        <li>Open your <strong>“Income tax”</strong> account from the homepage.</li>
+        <li>Click on the tax year (e.g., 2024–2025) to view details.</li>
+        <li>Look for:
+          <ul>
+            <li><strong>Gross Income</strong> (total income earned)</li>
+            <li><strong>PAYE Tax Paid</strong> (tax deducted by employer)</li>
+          </ul>
+        </li>
+        <li>Use these numbers in the calculator above.</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    function calculateTax() {
+      const income = parseFloat(document.getElementById("income").value);
+      const paidTax = parseFloat(document.getElementById("paidTax").value);
+
+      if (isNaN(income) || isNaN(paidTax)) {
+        alert("Please enter valid numbers.");
+        return;
+      }
+
+      let tax = 0;
+      const brackets = [
+        { limit: 14000, rate: 0.105 },
+        { limit: 15600, rate: 0.1282 },
+        { limit: 48000, rate: 0.175 },
+        { limit: 53500, rate: 0.2164 },
+        { limit: 70000, rate: 0.30 },
+        { limit: 78100, rate: 0.3099 },
+        { limit: 180000, rate: 0.33 },
+        { limit: Infinity, rate: 0.39 },
+      ];
+
+      let remaining = income;
+      let lastLimit = 0;
+
+      for (const bracket of brackets) {
+        if (remaining <= 0) break;
+        const taxable = Math.min(bracket.limit - lastLimit, remaining);
+        tax += taxable * bracket.rate;
+        remaining -= taxable;
+        lastLimit = bracket.limit;
+      }
+
+      const diff = paidTax - tax;
+      const resultBox = document.getElementById("result");
+
+      if (diff > 0.01) {
+        resultBox.className = "refund-box refund";
+        resultBox.textContent = `IRD Owes You: $${diff.toFixed(2)}`;
+      } else if (diff < -0.01) {
+        resultBox.className = "refund-box owing";
+        resultBox.textContent = `You Owe IRD: $${Math.abs(diff).toFixed(2)}`;
+      } else {
+        resultBox.className = "refund-box";
+        resultBox.textContent = `You are tax balanced.`;
+      }
+    }
+
+    function toggleGuide() {
+      const guide = document.getElementById("guide");
+      guide.style.display = guide.style.display === "none" ? "block" : "none";
+    }
+
+    // Initially hide guide
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("guide").style.display = "none";
+    });
+  </script>
+</body>
+</html>
